@@ -363,9 +363,12 @@ async def screened_stock_details(request):
     stock = request.match_info["stock"].upper()
     screener_slug = request.match_info["screener"]
     data = await db.get_stock_meta_for_strategy(stock, screener_slug)
-    data["presentation_urls"] = await investorDeckApi.get_company_presentation_urls(
-        stock
-    )
+    try:
+        data["presentation_urls"] = await investorDeckApi.get_company_presentation_urls(
+            stock
+        )
+    except Exception:
+        data["presentation_urls"] = ""
     return web.json_response(
         data,
         dumps=json_util.dumps,
