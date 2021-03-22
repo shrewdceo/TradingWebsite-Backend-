@@ -37,6 +37,12 @@ class FinancialModelingPrep:
             f"/api/v3/press-releases/{symbol}", params={"limit": limit}
         )
 
+    async def get_earning_call_transcripts(self, symbol, quarter, year):
+        return await self._get(
+            (f"/api/v3/earning_call_transcript/{symbol}"),
+            params={"quarter": quarter, "year": year}
+        )
+
     def _parse_date(self, date: str) -> datetime.datetime:
         [date, time] = date.split(" ")
         return datetime.datetime.fromisoformat(f"{date}T{time}")

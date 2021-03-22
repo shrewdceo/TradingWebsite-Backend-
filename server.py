@@ -435,6 +435,20 @@ async def get_stock_news(request):
     )
     return web.json_response(data)
 
+@routes.get("/earning-call-transcripts/{symbol}")
+async def get_earning_call_transcripts(request):
+    cache = request.app["cache"]
+    FMP = request.app["FMP"]
+
+    symbol = request.match_info["symbol"].upper()
+    quarter = request.query["quarter"]
+    year = request.query["year"]
+    cacheKey = f"news:{symbol.upper()}"
+
+    data = await cache.getCachedOrGetFromSourceAndCache(
+        cacheKey, FMP.get_earning_call_transcripts(symbol, quarter, year), expiry=datetime.timedelta(days=1)
+    )
+    return web.json_response(data)
 
 @routes.get("/sm")
 async def get_yahoo_symbols(request):
