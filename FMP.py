@@ -15,6 +15,8 @@ class FinancialModelingPrep:
                 params = kwargs.pop("params")
                 params["apikey"] = self._key
                 kwargs["params"] = params
+            else:
+                kwargs["params"] = {"apikey": self._key}
             async with session.get(self._get_url(url), *args, **kwargs) as response:
                 return await response.json()
 
@@ -72,3 +74,6 @@ class FinancialModelingPrep:
                 sorted(res, key=lambda x: x["publishedDate"], reverse=True),
             )
         )
+
+    async def get_historical_market_cap(self, symbol):
+        return await self._get(f"/api/v3/historical-market-capitalization/{symbol}")

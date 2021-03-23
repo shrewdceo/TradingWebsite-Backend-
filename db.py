@@ -162,6 +162,9 @@ class DB:
 
         return searchOptions
 
+    async def get_seasonality(self, symbol):
+        return await self.db.seasonality.find_one({"symbol": symbol})
+
 
 async def main():
     db = DB()
