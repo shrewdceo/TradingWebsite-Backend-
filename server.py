@@ -35,6 +35,8 @@ from timeseries.gapFill import fillGaps
 from timeseries.today import TickerManager
 from timeseries.yahoo_finance import Interval, YahooFinance
 
+from fundamental_ts import FundamentalTimeseries
+
 load_dotenv()
 logging.basicConfig(
     format="[%(asctime)s] [%(levelname)s] [%(module)s] %(message)s", level=logging.INFO
@@ -461,6 +463,23 @@ async def get_yahoo_symbols(request):
             return web.json_response(await response.json())
 
 
+@routes.get("/ts/{fundamental}/{symbol}")
+async def fundamental_timeseries_handler(request):
+    fundamental = request.match_info["fundamental"].lower()
+    symbol = request.match_info["symbol"]
+    return web.json_response(
+        await request.app["FTS"].get_fundamental_timeseries(
+            fundamental=fundamental, symbol=symbol
+        )
+    )
+
+
+@routes.get("/seasonality/{symbol}")
+async def get_seasonality(request):
+    symbol = request.match_info["symbol"]
+    return web.json_response(await db.get_seasonality(symbol), dumps=json_util.dumps)
+
+
 # @routes.options("/fundamentals")
 async def options_req(request):
     return web.Response(
@@ -591,8 +610,42 @@ async def attach_cache(app):
     app["cache"] = cache
 
 
+@aiocron.crontab("0 0 * * *")
+async def fundamental_ts_tasks(fts):
+    for symbol in await db.get_symbols():
+        logging.info("fundamental ts %s", symbol)
+        try:
+            market_cap = await fts.market_cap(symbol)
+            await fts.store_fundamental_timeseries(market_cap, symbol, "market_cap")
+        except:
+            logging.exception(
+                f"an exception occurred on market_cap fundamental ts task for {symbol}"
+            )
+
+        try:
+            revenue_ttm = await fts.revenue_ttm(symbol)
+            await fts.store_fundamental_timeseries(revenue_ttm, symbol, "revenue_ttm")
+        except:
+            logging.exception(
+                f"an exception occurred on revenue_ttm fundamental ts task for {symbol}"
+            )
+
+        try:
+            price_to_sales_ttm = await fts.price_to_sales_ttm(symbol)
+            await fts.store_fundamental_timeseries(
+                price_to_sales_ttm, symbol, "price_to_sales_ttm"
+            )
+        except Exception:
+            logging.exception(
+                f"an excception occurred on price_to_sales_ttm fundamental ts task for {symbol}"
+            )
+
+
 async def attach_fmp(app):
-    app["FMP"] = FinancialModelingPrep(os.environ.get("FMP_KEY"))
+    print("fmp key", os.environ.get("FMP_KEY"))
+    app["FMP"] = fmp = FinancialModelingPrep(os.environ.get("FMP_KEY"))
+    app["FTS"] = fundamental_ts = FundamentalTimeseries(fmp)
+    asyncio.create_task(fundamental_ts_tasks.func(fundamental_ts))
 
 
 def init_cron(cron):
