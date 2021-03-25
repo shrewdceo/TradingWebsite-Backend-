@@ -12,6 +12,21 @@ from timeseries.db import store_short_interest
 @click.command()
 @click.argument("csv")
 def import_csv(csv):
+    """
+    Symbol
+    ShortSqueeze.com Short Interest Data
+    Total Short Interest
+    Days to Cover
+    Short % of Float
+    % Insider Ownership
+    % Institutional Ownership
+    Avg. Daily Vol.
+    Price
+    Market Cap
+    Sector
+    Industry
+    date: MM/DD/YY
+    """
     df = pandas.read_csv(csv)
     points = []
     for i, row in df.iterrows():
@@ -43,20 +58,24 @@ def import_csv(csv):
             continue
 
         point = {
-            "symbol": getval("Symbol", str),
-            "name": getval("ShortSqueeze.com Short Interest Data", str),
-            "short_interest": getval("Total Short Interest"),
-            "days_to_cover_short": getval("Days to Cover"),
-            "float_short": getval("Short % of Float"),
-            "insider_ownership": getval("% Insider Ownership"),
-            "institutional_investors_ownership_percent": getval(
-                "% Institutional Ownership"
-            ),
-            "average_daily_volume_30d": getval("Avg. Daily Vol."),
-            "price": getval("Price"),
-            "market_cap": getval("Market Cap"),
-            "sector": getval("Sector", str),
-            "industry": getval("Industry", str),
+            "fundamentals": {
+                "symbol": getval("Symbol", str),
+                "name": getval("ShortSqueeze.com Short Interest Data", str),
+                "short_interest": getval("Total Short Interest"),
+                "days_to_cover_short": getval("Days to Cover"),
+                "float_short": getval("Short % of Float"),
+                "insider_ownership": getval("% Insider Ownership"),
+                "institutional_investors_ownership_percent": getval(
+                    "% Institutional Ownership"
+                ),
+                "average_daily_volume_30d": getval("Avg. Daily Vol."),
+                "price": getval("Price"),
+                "market_cap": getval("Market Cap"),
+                "sector": getval("Sector", str),
+                "industry": getval("Industry", str),
+                "timestamp": timestamp,
+            },
+            "symbol": symbol,
             "timestamp": timestamp,
         }
 
